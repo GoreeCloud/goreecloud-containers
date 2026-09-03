@@ -1,0 +1,133 @@
+schema_version: "0.2"
+
+component:
+  type: application
+  id: goreecloud-containers
+  product_name: GoreeCloud Containers
+  repository: GoreeCloud/goreecloud-containers
+
+lifecycle: development
+version: 0.1.0-dev.0
+
+supported_platforms:
+  - linux
+
+api:
+  versions: []
+  endpoints: []
+
+platform_systems:
+  manager:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - docs/PLATFORM_CONFORMANCE.md
+    notes: No accepted GoreeCloud Manager integration exists in the current Development foundation.
+  privacy_shield:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - docs/PLATFORM_CONFORMANCE.md
+      - docs/SECURITY.md
+    notes: Privacy-sensitive metadata and logging boundaries are documented, but no accepted Privacy Shield runtime integration exists.
+  wardveil_security:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - docs/PLATFORM_CONFORMANCE.md
+      - docs/SECURITY.md
+    notes: Baseline least-privilege design exists, but no accepted Wardveil Security runtime integration exists.
+  everkeep:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - docs/PLATFORM_CONFORMANCE.md
+      - docs/RECOVERY.md
+    notes: Recovery requirements are documented, but durable engine state and accepted Everkeep backup/restore evidence do not exist yet.
+  glaze_ui:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - docs/PLATFORM_CONFORMANCE.md
+    notes: The current foundation is CLI/library only. Planned graphical management surfaces require future Glaze UI implementation and acceptance.
+  mesh:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - docs/PLATFORM_CONFORMANCE.md
+    notes: GoreeCloud Mesh capability registration, events, dependencies, and runtime acceptance are not implemented.
+    capabilities: []
+    dependencies: []
+    published_events: []
+    consumed_events: []
+  identity:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - docs/PLATFORM_CONFORMANCE.md
+      - docs/SECURITY.md
+    notes: GoreeCloud Identity authentication and authorization are not implemented in the current local Development CLI foundation.
+
+health:
+  health_endpoint: null
+  readiness_endpoint: null
+
+continuity:
+  backup:
+    required: true
+    requirements:
+      - Protect durable engine configuration, workload definitions, metadata, and required volume relationships once durable state exists.
+      - Keep reconstructible image/cache content distinguishable from irreplaceable state.
+  restore:
+    required: true
+    requirements:
+      - Validate clean-target restoration of durable engine metadata and protected workload state before production qualification.
+      - Prove restored workloads and relationships rather than treating backup creation as restore evidence.
+  export:
+    required: true
+    requirements:
+      - Provide documented portable export for workload definitions and other durable configuration where practical.
+      - Never export reusable secrets as ordinary configuration.
+  portability:
+    required: true
+    requirements:
+      - Preserve OCI and documented declarative workload interoperability so GoreeCloud state can migrate without an unrecoverable proprietary dependency.
+
+external_dependencies:
+  - name: crun
+    purpose: Preferred mature OCI runtime candidate for planned low-level Linux container execution; currently used only when explicitly probed by the Development CLI.
+    required: false
+    version_constraint: null
+  - name: runc
+    purpose: Alternative mature OCI runtime candidate for planned low-level Linux container execution; currently used only when explicitly probed by the Development CLI.
+    required: false
+    version_constraint: null
+
+compatibility:
+  platform_contract: "0.2"
+  glaze_ui_required: null
+  requires:
+    - goreecloud-platform-contract==0.2
+  provides: []
+
+evidence:
+  acceptance_tests: []
+  release: []
+
+conformance:
+  status: nonconformant
+  validated_at: null
+  evidence:
+    - README.md
+    - docs/ARCHITECTURE.md
+    - docs/DEPENDENCIES.md
+    - docs/PLATFORM_CONFORMANCE.md
+    - docs/SECURITY.md
+    - docs/RECOVERY.md
+  blockers:
+    - No OCI image pull, verification, unpacking, or root filesystem implementation exists.
+    - No real container create/start/state/delete execution path has been accepted.
+    - Durable engine metadata and recovery behavior are not implemented.
+    - Rootless runtime operation, networking, storage, resource limits, health checks, and restart behavior are not implemented.
+    - GoreeCloud Manager, Privacy Shield, Wardveil Security, Everkeep, Glaze UI, Mesh, and Identity integrations are not accepted.
+    - No production deployment, migration pilot, rollback evidence, or Stable qualification exists.
