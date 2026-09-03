@@ -38,7 +38,9 @@ fn run_runtime(mut args: impl Iterator<Item = String>) -> Result<(), String> {
     match args.next().as_deref() {
         Some("probe") => {
             let kind = match args.next() {
-                Some(value) => value.parse::<OciRuntimeKind>().map_err(|error| error.to_string())?,
+                Some(value) => value
+                    .parse::<OciRuntimeKind>()
+                    .map_err(|error| error.to_string())?,
                 None => OciRuntimeKind::Crun,
             };
             let executable = args
@@ -54,7 +56,10 @@ fn run_runtime(mut args: impl Iterator<Item = String>) -> Result<(), String> {
             println!("version: {}", probe.version_output);
             Ok(())
         }
-        Some(command) => Err(format!("unknown runtime command '{command}'\n\n{}", help_text())),
+        Some(command) => Err(format!(
+            "unknown runtime command '{command}'\n\n{}",
+            help_text()
+        )),
         None => Err(format!("missing runtime command\n\n{}", help_text())),
     }
 }
@@ -70,7 +75,10 @@ fn run_container(mut args: impl Iterator<Item = String>) -> Result<(), String> {
             println!("valid container id: {id}");
             Ok(())
         }
-        Some(command) => Err(format!("unknown container command '{command}'\n\n{}", help_text())),
+        Some(command) => Err(format!(
+            "unknown container command '{command}'\n\n{}",
+            help_text()
+        )),
         None => Err(format!("missing container command\n\n{}", help_text())),
     }
 }

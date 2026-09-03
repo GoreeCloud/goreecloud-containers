@@ -46,7 +46,11 @@ pub struct RuntimeKindError(String);
 
 impl fmt::Display for RuntimeKindError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "unsupported OCI runtime '{}'; expected 'crun' or 'runc'", self.0)
+        write!(
+            formatter,
+            "unsupported OCI runtime '{}'; expected 'crun' or 'runc'",
+            self.0
+        )
     }
 }
 
@@ -97,9 +101,18 @@ pub struct RuntimeProbe {
 
 #[derive(Debug)]
 pub enum RuntimeError {
-    Spawn { executable: PathBuf, source: io::Error },
-    NonZeroExit { executable: PathBuf, code: Option<i32>, stderr: String },
-    EmptyVersionOutput { executable: PathBuf },
+    Spawn {
+        executable: PathBuf,
+        source: io::Error,
+    },
+    NonZeroExit {
+        executable: PathBuf,
+        code: Option<i32>,
+        stderr: String,
+    },
+    EmptyVersionOutput {
+        executable: PathBuf,
+    },
     BundlePathNotAbsolute(PathBuf),
 }
 
@@ -200,7 +213,9 @@ impl ProcessOciRuntime {
         bundle_path: &Path,
     ) -> Result<RuntimeCommand, RuntimeError> {
         if !bundle_path.is_absolute() {
-            return Err(RuntimeError::BundlePathNotAbsolute(bundle_path.to_path_buf()));
+            return Err(RuntimeError::BundlePathNotAbsolute(
+                bundle_path.to_path_buf(),
+            ));
         }
         Ok(RuntimeCommand {
             program: self.config.executable.clone(),
@@ -282,8 +297,17 @@ mod tests {
     #[test]
     fn plans_lifecycle_commands_without_executing_them() {
         let runtime = ProcessOciRuntime::new(RuntimeConfig::for_kind(OciRuntimeKind::Runc));
-        assert_eq!(runtime.plan_start(&id()).display_lossy(), "runc start example");
-        assert_eq!(runtime.plan_state(&id()).display_lossy(), "runc state example");
-        assert_eq!(runtime.plan_delete(&id()).display_lossy(), "runc delete example");
+        assert_eq!(
+            runtime.plan_start(&id()).display_lossy(),
+            "runc start example"
+        );
+        assert_eq!(
+            runtime.plan_state(&id()).display_lossy(),
+            "runc state example"
+        );
+        assert_eq!(
+            runtime.plan_delete(&id()).display_lossy(),
+            "runc delete example"
+        );
     }
 }

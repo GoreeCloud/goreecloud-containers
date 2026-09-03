@@ -22,8 +22,7 @@ impl ContainerId {
         }
 
         for (index, character) in value.char_indices() {
-            let allowed = character.is_ascii_alphanumeric()
-                || matches!(character, '-' | '_' | '.');
+            let allowed = character.is_ascii_alphanumeric() || matches!(character, '-' | '_' | '.');
             if !allowed {
                 return Err(ContainerIdError::InvalidCharacter { index, character });
             }
@@ -60,7 +59,10 @@ impl fmt::Display for ContainerIdError {
         match self {
             Self::Empty => formatter.write_str("container identifier cannot be empty"),
             Self::TooLong { actual, maximum } => {
-                write!(formatter, "container identifier length {actual} exceeds maximum {maximum}")
+                write!(
+                    formatter,
+                    "container identifier length {actual} exceeds maximum {maximum}"
+                )
             }
             Self::InvalidStart { character } => write!(
                 formatter,
@@ -233,7 +235,10 @@ mod tests {
     #[test]
     fn validates_container_identifiers() {
         assert!(ContainerId::parse("web-01.prod").is_ok());
-        assert!(matches!(ContainerId::parse(""), Err(ContainerIdError::Empty)));
+        assert!(matches!(
+            ContainerId::parse(""),
+            Err(ContainerIdError::Empty)
+        ));
         assert!(matches!(
             ContainerId::parse("_hidden"),
             Err(ContainerIdError::InvalidStart { .. })
@@ -252,7 +257,10 @@ mod tests {
         assert!(store.insert(record).is_ok());
 
         let error = store.transition(&container_id, ContainerState::Running);
-        assert!(matches!(error, Err(StateStoreError::InvalidTransition { .. })));
+        assert!(matches!(
+            error,
+            Err(StateStoreError::InvalidTransition { .. })
+        ));
     }
 
     #[test]
@@ -261,10 +269,26 @@ mod tests {
         let container_id = id("example");
         let record = ContainerRecord::new(container_id.clone(), PathBuf::from("/tmp/example"));
         assert!(store.insert(record).is_ok());
-        assert!(store.transition(&container_id, ContainerState::Created).is_ok());
-        assert!(store.transition(&container_id, ContainerState::Running).is_ok());
-        assert!(store.transition(&container_id, ContainerState::Stopped).is_ok());
-        assert!(store.transition(&container_id, ContainerState::Defined).is_ok());
+        assert!(
+            store
+                .transition(&container_id, ContainerState::Created)
+                .is_ok()
+        );
+        assert!(
+            store
+                .transition(&container_id, ContainerState::Running)
+                .is_ok()
+        );
+        assert!(
+            store
+                .transition(&container_id, ContainerState::Stopped)
+                .is_ok()
+        );
+        assert!(
+            store
+                .transition(&container_id, ContainerState::Defined)
+                .is_ok()
+        );
     }
 
     #[test]
@@ -275,7 +299,11 @@ mod tests {
             assert!(store.insert(record).is_ok());
         }
 
-        let names: Vec<&str> = store.list().iter().map(|record| record.id.as_str()).collect();
+        let names: Vec<&str> = store
+            .list()
+            .iter()
+            .map(|record| record.id.as_str())
+            .collect();
         assert_eq!(names, vec!["alpha", "middle", "zeta"]);
     }
 }

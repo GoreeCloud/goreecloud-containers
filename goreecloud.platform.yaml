@@ -49,7 +49,7 @@ platform_systems:
     version: null
     evidence:
       - docs/PLATFORM_CONFORMANCE.md
-    notes: The current foundation is CLI/library only. Planned graphical management surfaces require future Glaze UI implementation and acceptance.
+    notes: The current foundation is CLI/library only. Planned graphical management surfaces require future Glaze UI 1.1.0 implementation and acceptance.
   mesh:
     result: applicable-blocked
     version: null
@@ -105,7 +105,7 @@ external_dependencies:
 
 compatibility:
   platform_contract: "0.2"
-  glaze_ui_required: null
+  glaze_ui_required: "1.1.0"
   requires:
     - goreecloud-platform-contract==0.2
   provides: []
