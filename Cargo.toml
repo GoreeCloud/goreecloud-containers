@@ -1,0 +1,17 @@
+[workspace]
+members = [
+    "crates/goreecloud-containers-core",
+    "crates/goreecloud-containers-runtime",
+    "crates/goree",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0-dev.0"
+edition = "2024"
+rust-version = "1.85"
+license = "Apache-2.0"
+repository = "https://github.com/GoreeCloud/goreecloud-containers"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
