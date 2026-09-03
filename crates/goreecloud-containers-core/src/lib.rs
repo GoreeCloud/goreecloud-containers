@@ -163,11 +163,8 @@ impl Error for StateStoreError {}
 pub trait StateStore {
     fn insert(&mut self, record: ContainerRecord) -> Result<(), StateStoreError>;
     fn get(&self, id: &ContainerId) -> Option<&ContainerRecord>;
-    fn transition(
-        &mut self,
-        id: &ContainerId,
-        next: ContainerState,
-    ) -> Result<(), StateStoreError>;
+    fn transition(&mut self, id: &ContainerId, next: ContainerState)
+    -> Result<(), StateStoreError>;
     fn remove(&mut self, id: &ContainerId) -> Result<ContainerRecord, StateStoreError>;
     fn list(&self) -> Vec<&ContainerRecord>;
 }
