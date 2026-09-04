@@ -895,12 +895,7 @@ esac
             Ok(state) => state,
             Err(error) => panic!("fake state should succeed: {error}"),
         };
-        assert!(
-            state
-                .stdout
-                .text_lossy()
-                .contains("\"status\":\"running\"")
-        );
+        assert!(state.stdout.text_lossy().contains("\"status\":\"running\""));
         let delete = runtime.delete(&executor, &id());
         assert!(delete.is_ok());
 
