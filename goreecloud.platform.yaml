@@ -7,7 +7,7 @@ component:
   repository: GoreeCloud/goreecloud-containers
 
 lifecycle: development
-version: 0.1.0-dev.0
+version: 0.1.0-dev.1
 
 supported_platforms:
   - linux
@@ -22,34 +22,34 @@ platform_systems:
     version: null
     evidence:
       - docs/PLATFORM_CONFORMANCE.md
-    notes: No accepted GoreeCloud Manager integration exists in the current Development foundation.
+    notes: No accepted GoreeCloud Manager integration exists in the current Development source.
   privacy_shield:
     result: applicable-blocked
     version: null
     evidence:
       - docs/PLATFORM_CONFORMANCE.md
       - docs/SECURITY.md
-    notes: Privacy-sensitive metadata and logging boundaries are documented, but no accepted Privacy Shield runtime integration exists.
+    notes: Source-level bounded runtime output and privacy-sensitive data boundaries exist, but no accepted Privacy Shield runtime integration exists.
   wardveil_security:
     result: applicable-blocked
     version: null
     evidence:
       - docs/PLATFORM_CONFORMANCE.md
       - docs/SECURITY.md
-    notes: Baseline least-privilege design exists, but no accepted Wardveil Security runtime integration exists.
+    notes: Source-level runtime/path validation and execution controls exist, but no accepted Wardveil Security runtime integration exists.
   everkeep:
     result: applicable-blocked
     version: null
     evidence:
       - docs/PLATFORM_CONFORMANCE.md
       - docs/RECOVERY.md
-    notes: Recovery requirements are documented, but durable engine state and accepted Everkeep backup/restore evidence do not exist yet.
+    notes: Conservative Development bundle writes exist, but durable engine state and accepted Everkeep backup/restore evidence do not exist.
   glaze_ui:
     result: applicable-blocked
     version: null
     evidence:
       - docs/PLATFORM_CONFORMANCE.md
-    notes: The current foundation is CLI/library only. Planned graphical management surfaces require future Glaze UI 1.1.0 implementation and acceptance.
+    notes: The current source is CLI/library only. Planned graphical management surfaces require future Glaze UI 1.1.0 implementation and acceptance.
   mesh:
     result: applicable-blocked
     version: null
@@ -66,7 +66,7 @@ platform_systems:
     evidence:
       - docs/PLATFORM_CONFORMANCE.md
       - docs/SECURITY.md
-    notes: GoreeCloud Identity authentication and authorization are not implemented in the current local Development CLI foundation.
+    notes: GoreeCloud Identity authentication and authorization are not implemented in the current local Development CLI.
 
 health:
   health_endpoint: null
@@ -95,11 +95,11 @@ continuity:
 
 external_dependencies:
   - name: crun
-    purpose: Preferred mature OCI runtime candidate for planned low-level Linux container execution; currently used only when explicitly probed by the Development CLI.
+    purpose: Preferred mature OCI runtime target. Current Development source can explicitly probe and invoke a caller-supplied absolute executable path; real lifecycle acceptance remains pending.
     required: false
     version_constraint: null
   - name: runc
-    purpose: Alternative mature OCI runtime candidate for planned low-level Linux container execution; currently used only when explicitly probed by the Development CLI.
+    purpose: Alternative mature OCI runtime target. Current Development source can explicitly probe and invoke a caller-supplied absolute executable path; real lifecycle acceptance remains pending.
     required: false
     version_constraint: null
 
@@ -119,15 +119,18 @@ conformance:
   validated_at: null
   evidence:
     - README.md
+    - SPECIFICATIONS.md
+    - FEATURES.md
+    - USER-MANUAL.md
     - docs/ARCHITECTURE.md
     - docs/DEPENDENCIES.md
     - docs/PLATFORM_CONFORMANCE.md
     - docs/SECURITY.md
     - docs/RECOVERY.md
   blockers:
-    - No OCI image pull, verification, unpacking, or root filesystem implementation exists.
-    - No real container create/start/state/delete execution path has been accepted.
+    - No OCI image pull, verification, unpacking, or root filesystem construction exists.
+    - A controlled source-level runtime execution path exists and is covered by fake-runtime tests, but real crun/runc lifecycle acceptance and OCI conformance evidence remain pending.
     - Durable engine metadata and recovery behavior are not implemented.
-    - Rootless runtime operation, networking, storage, resource limits, health checks, and restart behavior are not implemented.
+    - Rootless runtime acceptance, networking, storage, resource limits, health checks, and restart behavior are not implemented.
     - GoreeCloud Manager, Privacy Shield, Wardveil Security, Everkeep, Glaze UI, Mesh, and Identity integrations are not accepted.
     - No production deployment, migration pilot, rollback evidence, or Stable qualification exists.

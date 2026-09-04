@@ -2,31 +2,29 @@
 
 ## Current scope
 
-This repository is pre-production. The only process execution currently implemented is an explicit OCI runtime `--version` probe initiated by the local CLI. Planned OCI lifecycle commands are represented as data and are not executed.
+The repository is pre-production. It now contains a controlled source path capable of invoking a selected OCI runtime for `create`, `start`, `state`, and `delete`, plus an OCI bundle/config generator. Automated lifecycle tests use a fake runtime; real `crun`/`runc` and rootless acceptance remain pending.
 
-## Baseline rules
+## Implemented safety boundaries
 
-- Rootless is the intended default wherever supported.
-- Rootful operation must become an explicit elevated path, never an implicit fallback.
-- Runtime choice must be explicit; a selected runtime failure must not silently switch engines or elevate privileges.
-- Administrative sockets/APIs must not become unrestricted host-root equivalents.
-- Container identifiers and critical paths must be validated before use.
-- Bundle planning currently requires absolute paths to remove working-directory ambiguity.
-- Runtime output must be treated as untrusted input when later parsed.
-- Secrets must not be accepted into ordinary logs, exports, or source-controlled configuration.
-- Missing authorization/security evidence must fail closed once privileged or remote operations exist.
+- Rootless operation remains the intended default, but is not yet accepted.
+- Runtime lifecycle execution requires an explicit runtime kind and absolute executable path.
+- The executable path is canonicalized and must resolve to a regular executable file with executable permission on Unix.
+- Runtime selection does not silently fall back or elevate.
+- `create` requires an absolute bundle, validates/canonicalizes it, rejects a symbolic-link bundle endpoint, and requires a regular non-symlink `config.json` endpoint.
+- Bundle initialization rejects symbolic-link bundle/rootfs endpoints and refuses to overwrite `config.json`.
+- Generated Development config enables `noNewPrivileges` and defaults the in-container process to UID/GID 65534.
+- The runtime is spawned directly without a command shell and with null stdin.
+- stdout/stderr are drained and retained with a default 1 MiB-per-stream bound.
+- A default 30-second timeout attempts to terminate the directly invoked runtime process.
+- Non-zero runtime exits are errors rather than silent success.
+- Runtime output remains untrusted input; current `state` output is not parsed into trusted durable state.
 
-## Not yet implemented
+## Important limitations
 
-- Runtime lifecycle execution and timeout/output bounds.
-- Rootless user-namespace/cgroup/network validation.
-- Capability, seccomp, SELinux/AppArmor policy handling.
-- Image digest/signature/attestation/SBOM verification.
-- Secret storage and injection.
-- GoreeCloud Identity authorization.
-- Wardveil Security integration.
-- Privacy Shield enforcement.
-- Remote API transport security.
-- Security event/audit integration.
+- UID/GID 65534 inside the generated container config does **not** prove host-level rootless execution.
+- No user-namespace mapping, cgroup policy, capability policy, seccomp profile, SELinux/AppArmor integration, or network configuration is accepted yet.
+- Timeout handling targets the directly invoked process; complete process-tree supervision/recovery is not established.
+- No image digest/signature/attestation/SBOM verification exists yet.
+- No secret store/injection, GoreeCloud Identity authorization, Wardveil Security integration, Privacy Shield enforcement, remote API security, or security-event integration exists.
 
-No production security claim should be inferred from this document or the current source foundation.
+No production security claim should be inferred from the current source foundation.

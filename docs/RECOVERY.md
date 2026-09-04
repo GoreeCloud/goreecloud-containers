@@ -2,9 +2,13 @@
 
 ## Current state
 
-The current `MemoryStateStore` is intentionally volatile and exists only to establish/test the engine domain model. It is not a backup, database, recovery mechanism, or accepted engine metadata format.
+`MemoryStateStore` remains volatile Development/test state and is not a database or recovery mechanism. The new bundle initializer writes a Development `config.json` into a caller-provided test bundle, but that bundle is not a GoreeCloud durable engine-state contract.
 
-There is currently no durable GoreeCloud Containers state requiring production backup because no durable engine implementation exists yet.
+There is still no durable GoreeCloud Containers metadata implementation or accepted runtime-data recovery workflow.
+
+## Bundle write behavior
+
+Bundle initialization refuses to overwrite an existing `config.json`, creates a new file with create-new semantics, writes the generated configuration, and synchronizes the file. This reduces accidental replacement but does not by itself establish crash-safe transactional engine metadata, directory durability, backup, or restore acceptance.
 
 ## Required future classification
 
@@ -20,14 +24,6 @@ Before durable state is introduced, the engine must distinguish at least:
 
 ## Recovery requirements
 
-Production qualification will require:
+Production qualification will require clean-target restoration, workload/relationship validation, protected secret recovery, migration/rollback validation, cache-vs-critical-state classification, and accepted Everkeep integration where applicable.
 
-- Backup of all state classified as required.
-- Protected secret recovery through approved mechanisms rather than ordinary exports.
-- Clean-target restore testing.
-- Validation that restored engine relationships and workloads are usable.
-- Explicit handling of content that can be re-pulled/reconstructed instead of unnecessarily treating cache as irreplaceable.
-- Rollback and migration validation for engine upgrades.
-- Everkeep integration and acceptance where applicable.
-
-A successful source build or a copy of the repository is not recovery evidence for future runtime state.
+A passing source build, generated test bundle, or repository copy is not recovery evidence for future engine runtime state.
