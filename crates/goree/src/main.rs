@@ -1,4 +1,7 @@
 use goreecloud_containers_core::ContainerId;
+use goreecloud_containers_image::{
+    ContentStore, DEFAULT_MAX_CONTENT_BYTES, Sha256Digest,
+};
 use goreecloud_containers_oci::{OciConfig, initialize_linux_bundle};
 use goreecloud_containers_runtime::{
     OciRuntimeKind, ProcessOciRuntime, RuntimeConfig, RuntimeExecution, RuntimeExecutor,
@@ -28,6 +31,7 @@ fn run() -> Result<(), String> {
             Ok(())
         }
         Some("bundle") => run_bundle(args),
+        Some("image") => run_image(args),
         Some("runtime") => run_runtime(args),
         Some("container") => run_container(args),
         Some("help") | Some("--help") | Some("-h") | None => {
@@ -60,6 +64,49 @@ fn run_bundle(mut args: impl Iterator<Item = String>) -> Result<(), String> {
             help_text()
         )),
         None => Err(format!("missing bundle command\n\n{}", help_text())),
+    }
+}
+
+fn run_image(mut args: impl Iterator<Item = String>) -> Result<(), String> {
+    match args.next().as_deref() {
+        Some("ingest") => {
+            let digest = args
+                .next()
+                .ok_or_else(|| "missing expected sha256 digest".to_owned())?
+                .parse::<Sha256Digest>()
+                .map_err(|error| error.to_string())?;
+            let source = PathBuf::from(
+                args.next()
+                    .ok_or_else(|| "missing absolute source-file path".to_owned())?,
+            );
+            let store_root = PathBuf::from(
+                args.next()
+                    .ok_or_else(|| "missing absolute content-store root".to_owned())?,
+            );
+            let max_content_bytes = match args.next() {
+                Some(value) => value
+                    .parse::<u64>()
+                    .map_err(|_| "max-content-bytes must be an unsigned integer".to_owned())?,
+                None => DEFAULT_MAX_CONTENT_BYTES,
+            };
+            ensure_no_extra_args(args)?;
+
+            let store =
+                ContentStore::open(store_root, max_content_bytes).map_err(|error| error.to_string())?;
+            let content = store
+                .ingest_file(digest, &source)
+                .map_err(|error| error.to_string())?;
+            println!("digest: {}", content.digest);
+            println!("size: {}", content.size);
+            println!("content: {}", content.path.display());
+            println!("reused-existing: {}", content.reused_existing);
+            Ok(())
+        }
+        Some(command) => Err(format!(
+            "unknown image command '{command}'\n\n{}",
+            help_text()
+        )),
+        None => Err(format!("missing image command\n\n{}", help_text())),
     }
 }
 
@@ -211,5 +258,5 @@ fn print_help() {
 }
 
 fn help_text() -> &'static str {
-    "GoreeCloud Containers Development CLI\n\nUsage:\n  goree version\n  goree bundle init <absolute-bundle> <command> [args...]\n  goree runtime probe [crun|runc] [executable]\n  goree runtime create <crun|runc> <absolute-executable> <container-id> <absolute-bundle>\n  goree runtime start <crun|runc> <absolute-executable> <container-id>\n  goree runtime state <crun|runc> <absolute-executable> <container-id>\n  goree runtime delete <crun|runc> <absolute-executable> <container-id>\n  goree container validate-id <container-id>\n\nLifecycle execution is Development-only. Real crun/runc, rootless, and production acceptance remain pending."
+    "GoreeCloud Containers Development CLI\n\nUsage:\n  goree version\n  goree bundle init <absolute-bundle> <command> [args...]\n  goree image ingest <sha256:digest> <absolute-source-file> <absolute-store-root> [max-content-bytes]\n  goree runtime probe [crun|runc] [executable]\n  goree runtime create <crun|runc> <absolute-executable> <container-id> <absolute-bundle>\n  goree runtime start <crun|runc> <absolute-executable> <container-id>\n  goree runtime state <crun|runc> <absolute-executable> <container-id>\n  goree runtime delete <crun|runc> <absolute-executable> <container-id>\n  goree container validate-id <container-id>\n\nImage ingest and lifecycle execution are Development-only. Registry retrieval, real crun/runc, rootless, and production acceptance remain pending."
 }

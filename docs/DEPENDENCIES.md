@@ -7,7 +7,15 @@ Current repository minimum/pin: Rust 1.85.0, Edition 2024.
 Boundary: build/language toolchain; it does not define GoreeCloud Containers product behavior.  
 Update path: deliberate toolchain updates through reviewed source changes and CI.
 
-The current Rust crates intentionally have no third-party Cargo package dependencies.
+## sha2 Rust crate
+
+Purpose: provide the mature SHA-256 implementation used by the Development image-content path to verify OCI-compatible content digests before blobs are accepted into the content-addressed store.  
+Current source use: `goreecloud-containers-image` depends on the RustCrypto `sha2` 0.10 release line for SHA-256 hashing only.  
+Necessity: cryptographic digest verification is security-sensitive and should not be replaced by an ad hoc GoreeCloud hash implementation merely for ownership.  
+Boundary: digest calculation only; GoreeCloud owns digest parsing policy, size limits, content-store layout, path validation, installation semantics, errors, CLI behavior, and future registry/image orchestration.  
+Security/privacy: input bytes are hashed locally; this dependency does not itself perform networking, authentication, telemetry, or secret storage.  
+Failure implication: content whose calculated digest differs from the expected digest is rejected and is not installed as verified content.  
+Replacement/update path: deliberate reviewed dependency changes with compatibility, vulnerability, provenance, and license review.
 
 ## crun
 

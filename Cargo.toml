@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "crates/goreecloud-containers-core",
+    "crates/goreecloud-containers-image",
     "crates/goreecloud-containers-oci",
     "crates/goreecloud-containers-runtime",
     "crates/goree",
