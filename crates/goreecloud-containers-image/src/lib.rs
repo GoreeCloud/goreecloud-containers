@@ -54,9 +54,8 @@ impl FromStr for Sha256Digest {
         let mut bytes = [0_u8; 32];
         let raw = hex.as_bytes();
         for (index, byte) in bytes.iter_mut().enumerate() {
-            let high = decode_hex(raw[index * 2]).ok_or(DigestParseError::InvalidHex {
-                index: index * 2,
-            })?;
+            let high = decode_hex(raw[index * 2])
+                .ok_or(DigestParseError::InvalidHex { index: index * 2 })?;
             let low = decode_hex(raw[index * 2 + 1]).ok_or(DigestParseError::InvalidHex {
                 index: index * 2 + 1,
             })?;
@@ -114,7 +113,9 @@ pub enum ImageContentError {
     InstalledContentSymlink(PathBuf),
     InstalledContentNotRegularFile(PathBuf),
     InvalidMaxContentBytes,
-    ContentTooLarge { maximum: u64 },
+    ContentTooLarge {
+        maximum: u64,
+    },
     DigestMismatch {
         expected: Sha256Digest,
         actual: Sha256Digest,
@@ -145,7 +146,11 @@ impl fmt::Display for ImageContentError {
                 path.display()
             ),
             Self::SourcePathNotAbsolute(path) => {
-                write!(formatter, "source path must be absolute: {}", path.display())
+                write!(
+                    formatter,
+                    "source path must be absolute: {}",
+                    path.display()
+                )
             }
             Self::SourcePathSymlink(path) => write!(
                 formatter,
@@ -153,7 +158,11 @@ impl fmt::Display for ImageContentError {
                 path.display()
             ),
             Self::SourceNotRegularFile(path) => {
-                write!(formatter, "source is not a regular file: {}", path.display())
+                write!(
+                    formatter,
+                    "source is not a regular file: {}",
+                    path.display()
+                )
             }
             Self::SubdirectorySymlink(path) => write!(
                 formatter,
@@ -179,10 +188,16 @@ impl fmt::Display for ImageContentError {
                 formatter.write_str("maximum content size must be greater than zero")
             }
             Self::ContentTooLarge { maximum } => {
-                write!(formatter, "content exceeds configured limit of {maximum} bytes")
+                write!(
+                    formatter,
+                    "content exceeds configured limit of {maximum} bytes"
+                )
             }
             Self::DigestMismatch { expected, actual } => {
-                write!(formatter, "digest mismatch: expected {expected}, calculated {actual}")
+                write!(
+                    formatter,
+                    "digest mismatch: expected {expected}, calculated {actual}"
+                )
             }
             Self::Io {
                 operation,
@@ -309,11 +324,7 @@ impl ContentStore {
         let algorithm_directory = self.ensure_subdirectory("sha256")?;
         let target_path = algorithm_directory.join(expected_hex(expected));
         if target_path.exists() {
-            let size = verify_installed_content(
-                &target_path,
-                expected,
-                self.max_content_bytes,
-            )?;
+            let size = verify_installed_content(&target_path, expected, self.max_content_bytes)?;
             return Ok(StoredContent {
                 digest: expected,
                 path: target_path,
@@ -323,13 +334,11 @@ impl ContentStore {
         }
 
         let incoming_directory = self.ensure_subdirectory(".incoming")?;
-        let (incoming_path, mut incoming_file) =
-            create_incoming_file(&incoming_directory).map_err(|(path, source)| {
-                ImageContentError::Io {
-                    operation: "create incoming content file",
-                    path,
-                    source,
-                }
+        let (incoming_path, mut incoming_file) = create_incoming_file(&incoming_directory)
+            .map_err(|(path, source)| ImageContentError::Io {
+                operation: "create incoming content file",
+                path,
+                source,
             })?;
 
         let result = copy_and_hash(&mut reader, &mut incoming_file, self.max_content_bytes);
@@ -435,11 +444,13 @@ fn copy_and_hash(
     let mut buffer = [0_u8; 64 * 1024];
 
     loop {
-        let count = reader.read(&mut buffer).map_err(|source| ImageContentError::Io {
-            operation: "read source content",
-            path: PathBuf::from("<reader>"),
-            source,
-        })?;
+        let count = reader
+            .read(&mut buffer)
+            .map_err(|source| ImageContentError::Io {
+                operation: "read source content",
+                path: PathBuf::from("<reader>"),
+                source,
+            })?;
         if count == 0 {
             break;
         }
@@ -578,8 +589,7 @@ mod tests {
         fs::write(&source, b"hello").expect("fixture should be written");
         let store_root = root.join("store");
         fs::create_dir(&store_root).expect("store directory should be created");
-        let store =
-            ContentStore::open(&store_root, 1024).expect("absolute test store should open");
+        let store = ContentStore::open(&store_root, 1024).expect("absolute test store should open");
 
         let installed = store
             .ingest_file(hello_digest(), &source)
@@ -605,8 +615,7 @@ mod tests {
         let root = temporary_directory("mismatch");
         let store_root = root.join("store");
         fs::create_dir(&store_root).expect("store directory should be created");
-        let store =
-            ContentStore::open(&store_root, 1024).expect("absolute test store should open");
+        let store = ContentStore::open(&store_root, 1024).expect("absolute test store should open");
         let error = store.ingest_reader(hello_digest(), b"different".as_slice());
         assert!(matches!(
             error,
@@ -625,8 +634,7 @@ mod tests {
         let root = temporary_directory("limit");
         let store_root = root.join("store");
         fs::create_dir(&store_root).expect("store directory should be created");
-        let store =
-            ContentStore::open(&store_root, 4).expect("absolute test store should open");
+        let store = ContentStore::open(&store_root, 4).expect("absolute test store should open");
         let error = store.ingest_reader(hello_digest(), b"hello".as_slice());
         assert!(matches!(
             error,
@@ -644,8 +652,7 @@ mod tests {
         ));
 
         let root = temporary_directory("relative-source");
-        let store =
-            ContentStore::open(&root, 1024).expect("absolute test store should open");
+        let store = ContentStore::open(&root, 1024).expect("absolute test store should open");
         assert!(matches!(
             store.ingest_file(hello_digest(), Path::new("relative-source")),
             Err(ImageContentError::SourcePathNotAbsolute(_))
