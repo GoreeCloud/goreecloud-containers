@@ -1,7 +1,5 @@
 use goreecloud_containers_core::ContainerId;
-use goreecloud_containers_image::{
-    ContentStore, DEFAULT_MAX_CONTENT_BYTES, Sha256Digest,
-};
+use goreecloud_containers_image::{ContentStore, DEFAULT_MAX_CONTENT_BYTES, Sha256Digest};
 use goreecloud_containers_oci::{OciConfig, initialize_linux_bundle};
 use goreecloud_containers_runtime::{
     OciRuntimeKind, ProcessOciRuntime, RuntimeConfig, RuntimeExecution, RuntimeExecutor,
@@ -91,8 +89,8 @@ fn run_image(mut args: impl Iterator<Item = String>) -> Result<(), String> {
             };
             ensure_no_extra_args(args)?;
 
-            let store =
-                ContentStore::open(store_root, max_content_bytes).map_err(|error| error.to_string())?;
+            let store = ContentStore::open(store_root, max_content_bytes)
+                .map_err(|error| error.to_string())?;
             let content = store
                 .ingest_file(digest, &source)
                 .map_err(|error| error.to_string())?;
