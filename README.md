@@ -1,51 +1,71 @@
 # GoreeCloud Containers
 
-GoreeCloud Containers is the planned first-party OCI-compatible container engine and workload platform for GoreeCloud.
+GoreeCloud Containers is the first-party GoreeCloud container-engine and workload-platform project. It is being developed as an OCI-compatible engine that preserves interoperability with mature OCI runtimes while keeping GoreeCloud ownership of the engine contract, CLI, state model, policy, lifecycle, and future platform integrations.
 
 ## Development status
 
 **Lifecycle:** Development  
-**Version:** `0.1.0-dev.0`  
+**Version:** `0.1.0-dev.1`  
+**Supported development platform:** Linux  
 **Production replacement:** No
 
-This repository now contains the first native Rust development foundation. It does **not** yet run containers, pull images, provide networking, persist engine state, expose a daemon/API, or replace Docker in GoreeCloud production.
+The repository now contains a source-level OCI bundle/config model and a controlled lifecycle execution path for `create`, `start`, `state`, and `delete`. The execution path is validated with deterministic fake-runtime tests. **Real `crun`/`runc` lifecycle acceptance, OCI conformance, rootless acceptance, image pulling/unpacking, production deployment, and Docker replacement are not established.**
 
 Docker remains the current GoreeCloud production container runtime until a separately validated migration changes that operational state.
 
-## Implemented in this foundation
+## Implemented Development foundation
 
-- A Rust workspace owned by GoreeCloud.
-- A core crate with validated container identifiers, explicit lifecycle states, guarded state transitions, and a deterministic in-memory state store for development/tests.
-- An OCI runtime adapter crate with explicit `crun` and `runc` runtime identities.
-- Runtime version probing through a narrowly scoped process invocation.
-- Deterministic command planning for OCI `create`, `start`, `state`, and `delete` operations without executing container lifecycle operations yet.
-- A `goree` development CLI with `version`, `runtime probe`, and `container validate-id` commands.
-- Unit tests for identifier validation, state transitions, deterministic state ordering, runtime parsing, and OCI command planning.
-- GitHub Actions CI for formatting, linting, tests, and build validation.
-- GoreeCloud Platform Contract v0.2 declaration and reusable platform-contract validation.
-- Development documentation for architecture, dependencies, security, recovery, and platform-conformance boundaries.
+- Rust 2024 workspace pinned to Rust 1.85.0.
+- Validated container identifiers and an explicit lifecycle-state model.
+- Deterministic in-memory Development state store.
+- Typed minimal Linux OCI `config.json` generation targeting OCI Runtime Specification 1.3.0.
+- Fail-closed bundle initialization that requires an absolute existing bundle directory and existing non-symlink `rootfs/`, and refuses to overwrite `config.json`.
+- OCI runtime identities for `crun` and `runc`.
+- Runtime version probing.
+- Controlled runtime execution for `create`, `start`, `state`, and `delete` using an explicit absolute runtime executable path.
+- Runtime executable/bundle/config validation, direct process spawning without a shell, bounded stdout/stderr capture, timeout handling, and non-zero-exit propagation.
+- Development CLI commands for bundle initialization, runtime lifecycle operations, runtime probing, and container-ID validation.
+- Fake-runtime tests plus output-bound, timeout, and failure-path tests.
+- GitHub Actions CI for formatting, Clippy, tests, and build validation.
+- GoreeCloud Platform Contract v0.2 declaration and conformance validation.
 
-## Try the development CLI
+## Build and inspect the Development CLI
 
 ```bash
+cargo build --workspace
 cargo run -p goree -- version
 cargo run -p goree -- container validate-id example-container
 cargo run -p goree -- runtime probe crun
 ```
 
-`runtime probe` requires the selected executable to be installed and reachable. A successful probe proves only that the runtime executable can be invoked and report a version; it does not prove container lifecycle support or production readiness.
+The lifecycle commands are deliberately low-level Development interfaces. They require an already prepared OCI bundle/root filesystem and an explicit absolute runtime executable path:
 
-## Architecture direction
+```bash
+cargo run -p goree -- bundle init /absolute/path/to/bundle /bin/echo hello
+cargo run -p goree -- runtime create crun /usr/bin/crun example /absolute/path/to/bundle
+cargo run -p goree -- runtime start crun /usr/bin/crun example
+cargo run -p goree -- runtime state crun /usr/bin/crun example
+cargo run -p goree -- runtime delete crun /usr/bin/crun example
+```
 
-GoreeCloud owns the engine, API, CLI, state model, policy, networking/storage orchestration, workload lifecycle, user experience, and GoreeCloud platform integrations. Mature OCI runtimes remain bounded low-level execution foundations.
+`bundle init` requires `/absolute/path/to/bundle/rootfs/` to already exist. GoreeCloud Containers does not yet pull an OCI image or construct that root filesystem. The runtime lifecycle commands can execute a selected binary, but current automated evidence uses a fake runtime and must not be treated as real `crun`/`runc` acceptance.
 
-The preferred initial runtime is `crun`; `runc` is supported as an alternative runtime target. OCI Image, Runtime, and Distribution interoperability, Docker Registry compatibility, Dockerfile compatibility where practical, and Compose compatibility remain strategic requirements.
+## Documentation
 
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and the canonical GoreeCloud Project Specification for the full planned direction.
+- [User Manual](USER-MANUAL.md)
+- [Specifications](SPECIFICATIONS.md)
+- [Features](FEATURES.md)
+- [Benefits](BENEFITS.md)
+- [Competitive Objectives](COMPETITIVE-OBJECTIVES.md)
+- [Branding](BRANDING.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Security](docs/SECURITY.md)
+- [Recovery](docs/RECOVERY.md)
+- [Platform Conformance](docs/PLATFORM_CONFORMANCE.md)
 
-## Next implementation milestone
+## Next Phase 1 milestone
 
-The next Phase 1 slice should add a controlled OCI bundle model and a real create/start/state/delete execution path behind explicit safety checks, followed by OCI image manifest/layer retrieval and unpacking. Durable engine metadata must be designed before any state is represented as recoverable.
+The next major engine slice is the OCI image/content pipeline: registry manifest resolution, content-digest verification, bounded layer retrieval, content-addressed storage, safe layer unpacking, and root-filesystem construction. Real runtime/rootless acceptance remains a separate evidence gate.
 
 ## License
 

@@ -2,32 +2,33 @@
 
 ## Current Development architecture
 
-The repository is intentionally small and layered:
-
 ```text
 goree CLI
    |
    +--> goreecloud-containers-core
    |       container identity
    |       lifecycle state model
-   |       development state store
+   |       development memory state
+   |
+   +--> goreecloud-containers-oci
+   |       typed minimal OCI config
+   |       controlled bundle initialization
    |
    +--> goreecloud-containers-runtime
            crun/runc runtime identity
            runtime probe
-           OCI lifecycle command planning
+           lifecycle command planning
+           controlled process execution
 ```
 
-No daemon, remote API, image store, network manager, volume manager, OCI bundle generator, or real container execution path exists yet.
+There is still no daemon, remote API, OCI image store/puller, network manager, volume manager, durable metadata store, or accepted production runtime path.
 
 ## Ownership boundary
 
-GoreeCloud Containers is not intended to be a wrapper around Docker or Podman. GoreeCloud owns the high-level engine contract and product behavior. Mature OCI runtimes are bounded low-level dependencies used for process/container execution.
-
-The planned boundary is:
+GoreeCloud owns the high-level engine contract and product behavior. Mature OCI runtimes are bounded low-level dependencies used for process/container execution.
 
 ```text
-Native/Web GoreeCloud management clients
+Native/Web GoreeCloud management clients (planned)
                  |
               goree CLI
                  |
@@ -42,25 +43,40 @@ Native/Web GoreeCloud management clients
              Linux kernel
 ```
 
-## Initial safety decisions
+## OCI configuration boundary
 
-- Rootless operation is the intended normal mode where technically possible.
-- Runtime executable selection is explicit.
-- The initial runtime adapter only probes versions and plans lifecycle commands; it does not yet execute `create`, `start`, `state`, or `delete`.
-- OCI bundle paths are required to be absolute by command planning to avoid current-working-directory ambiguity.
-- Container identifiers are validated before becoming engine identities.
-- State transitions are explicit rather than arbitrary string mutation.
-- The current in-memory store is development/test state only and must not be represented as durable or recoverable.
+`goreecloud-containers-oci` currently produces a minimal deterministic Linux `config.json` representation targeting OCI Runtime Specification 1.3.0. Bundle initialization is deliberately conservative: the bundle and `rootfs/` must already exist, path endpoints must not be symbolic links, and `config.json` is created without overwrite.
+
+The crate does not pull or unpack images, create `rootfs/`, establish user-namespace mappings, or claim a complete production OCI policy.
+
+## Runtime execution boundary
+
+The runtime layer separates command construction from controlled execution. Lifecycle execution:
+
+- requires an explicit `crun`/`runc` runtime kind;
+- requires an absolute executable path and canonicalizes it;
+- requires a regular executable file;
+- validates and canonicalizes the bundle for `create`;
+- rejects bundle/config symbolic-link endpoints;
+- spawns the runtime directly without a command shell;
+- drains stdout/stderr concurrently while retaining bounded output;
+- applies an execution timeout and attempts to terminate the invoked process;
+- returns non-zero status as an explicit error.
+
+Automated acceptance at this layer currently uses a fake runtime. Real `crun`/`runc` behavior is therefore **unverified**, not implemented-by-evidence.
+
+## State boundary
+
+`MemoryStateStore` remains Development/test state only. Runtime `state` output is not yet reconciled into durable GoreeCloud engine metadata. No current runtime state should be represented as recoverable.
 
 ## Next architecture slice
 
-The next implementation should add:
+1. OCI registry reference resolution and manifest/config retrieval.
+2. Digest verification before accepting content.
+3. Bounded/content-addressed blob storage.
+4. Safe layer unpacking with path/link/device protections.
+5. Root-filesystem construction for a validated bundle.
+6. Real runtime/rootless acceptance as separate evidence gates.
+7. Crash-safe durable metadata only after its schema/recovery contract is defined.
 
-1. A typed OCI bundle/config model.
-2. Filesystem ownership and permission checks around a controlled bundle root.
-3. A runtime executor separate from command planning.
-4. Exact create/start/state/delete result handling with bounded output and timeouts.
-5. Crash-safe durable metadata only after its schema and recovery contract are defined.
-6. OCI image manifest/config/layer retrieval and digest verification.
-
-Networking, volumes, Compose, builds, remote management, and graphical clients follow after a complete local lifecycle is proven.
+Networking, volumes, Compose, builds, remote management, and graphical clients follow after a complete local image-to-lifecycle path is proven.
