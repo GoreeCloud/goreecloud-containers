@@ -227,7 +227,11 @@ impl fmt::Display for RuntimeError {
                 path.display()
             ),
             Self::BundleNotDirectory(path) => {
-                write!(formatter, "OCI bundle path is not a directory: {}", path.display())
+                write!(
+                    formatter,
+                    "OCI bundle path is not a directory: {}",
+                    path.display()
+                )
             }
             Self::BundleConfigSymlink(path) => write!(
                 formatter,
@@ -337,13 +341,25 @@ impl fmt::Display for RuntimeExecutionError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Spawn { program, source } => {
-                write!(formatter, "failed to spawn '{}': {source}", program.display())
+                write!(
+                    formatter,
+                    "failed to spawn '{}': {source}",
+                    program.display()
+                )
             }
             Self::Wait { program, source } => {
-                write!(formatter, "failed while waiting for '{}': {source}", program.display())
+                write!(
+                    formatter,
+                    "failed while waiting for '{}': {source}",
+                    program.display()
+                )
             }
             Self::Kill { program, source } => {
-                write!(formatter, "failed to terminate '{}': {source}", program.display())
+                write!(
+                    formatter,
+                    "failed to terminate '{}': {source}",
+                    program.display()
+                )
             }
             Self::Read { stream, source } => {
                 write!(formatter, "failed while draining child {stream}: {source}")
@@ -407,10 +423,7 @@ impl RuntimeExecutor {
         self.policy
     }
 
-    fn execute(
-        &self,
-        command: &RuntimeCommand,
-    ) -> Result<RuntimeExecution, RuntimeExecutionError> {
+    fn execute(&self, command: &RuntimeCommand) -> Result<RuntimeExecution, RuntimeExecutionError> {
         let mut child = Command::new(&command.program)
             .args(&command.args)
             .stdin(Stdio::null())
@@ -452,12 +465,10 @@ impl RuntimeExecutor {
                             });
                         }
                     }
-                    child
-                        .wait()
-                        .map_err(|source| RuntimeExecutionError::Wait {
-                            program: command.program.clone(),
-                            source,
-                        })?;
+                    child.wait().map_err(|source| RuntimeExecutionError::Wait {
+                        program: command.program.clone(),
+                        source,
+                    })?;
 
                     let (stdout, stderr) = finish_capture(stdout_reader, stderr_reader)?;
                     return Err(RuntimeExecutionError::TimedOut {
@@ -732,17 +743,14 @@ fn validate_bundle(bundle_path: &Path) -> Result<PathBuf, RuntimeError> {
         return Err(RuntimeError::BundlePathSymlink(bundle_path.to_path_buf()));
     }
     if !metadata.is_dir() {
-        return Err(RuntimeError::BundleNotDirectory(
-            bundle_path.to_path_buf(),
-        ));
+        return Err(RuntimeError::BundleNotDirectory(bundle_path.to_path_buf()));
     }
 
-    let canonical_bundle =
-        fs::canonicalize(bundle_path).map_err(|source| RuntimeError::Io {
-            operation: "canonicalize OCI bundle",
-            path: bundle_path.to_path_buf(),
-            source,
-        })?;
+    let canonical_bundle = fs::canonicalize(bundle_path).map_err(|source| RuntimeError::Io {
+        operation: "canonicalize OCI bundle",
+        path: bundle_path.to_path_buf(),
+        source,
+    })?;
     let config_path = canonical_bundle.join(OCI_CONFIG_FILENAME);
     let config_metadata =
         fs::symlink_metadata(&config_path).map_err(|source| RuntimeError::Io {
@@ -887,7 +895,12 @@ esac
             Ok(state) => state,
             Err(error) => panic!("fake state should succeed: {error}"),
         };
-        assert!(state.stdout.text_lossy().contains("\"status\":\"running\""));
+        assert!(
+            state
+                .stdout
+                .text_lossy()
+                .contains("\"status\":\"running\"")
+        );
         let delete = runtime.delete(&executor, &id());
         assert!(delete.is_ok());
 
@@ -899,10 +912,7 @@ esac
     fn bounds_captured_output() {
         let command = RuntimeCommand {
             program: PathBuf::from("/bin/sh"),
-            args: vec![
-                OsString::from("-c"),
-                OsString::from("printf '1234567890'"),
-            ],
+            args: vec![OsString::from("-c"), OsString::from("printf '1234567890'")],
         };
         let executor = RuntimeExecutor::new(RuntimeExecutionPolicy {
             max_output_bytes_per_stream: 4,
