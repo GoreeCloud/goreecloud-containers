@@ -151,7 +151,11 @@ impl OciConfig {
         push_json_string(&mut output, &self.oci_version);
         output.push_str(",\n  \"process\": {\n");
         output.push_str("    \"terminal\": ");
-        output.push_str(if self.process.terminal { "true" } else { "false" });
+        output.push_str(if self.process.terminal {
+            "true"
+        } else {
+            "false"
+        });
         output.push_str(",\n    \"user\": {\"uid\": ");
         let _ = write!(output, "{}", self.process.user.uid);
         output.push_str(", \"gid\": ");
@@ -245,7 +249,11 @@ impl fmt::Display for OciConfigError {
                 path.display()
             ),
             Self::BundleNotDirectory(path) => {
-                write!(formatter, "OCI bundle path is not a directory: {}", path.display())
+                write!(
+                    formatter,
+                    "OCI bundle path is not a directory: {}",
+                    path.display()
+                )
             }
             Self::RootfsPathSymlink(path) => write!(
                 formatter,
@@ -301,9 +309,7 @@ pub fn initialize_linux_bundle(
             source,
         })?;
     if bundle_metadata.file_type().is_symlink() {
-        return Err(OciConfigError::BundlePathSymlink(
-            bundle_path.to_path_buf(),
-        ));
+        return Err(OciConfigError::BundlePathSymlink(bundle_path.to_path_buf()));
     }
     if !bundle_metadata.is_dir() {
         return Err(OciConfigError::BundleNotDirectory(
@@ -311,12 +317,11 @@ pub fn initialize_linux_bundle(
         ));
     }
 
-    let canonical_bundle =
-        fs::canonicalize(bundle_path).map_err(|source| OciConfigError::Io {
-            operation: "canonicalize OCI bundle",
-            path: bundle_path.to_path_buf(),
-            source,
-        })?;
+    let canonical_bundle = fs::canonicalize(bundle_path).map_err(|source| OciConfigError::Io {
+        operation: "canonicalize OCI bundle",
+        path: bundle_path.to_path_buf(),
+        source,
+    })?;
     let rootfs_path = canonical_bundle.join(DEFAULT_ROOTFS_DIRECTORY);
     let rootfs_metadata =
         fs::symlink_metadata(&rootfs_path).map_err(|source| OciConfigError::Io {
