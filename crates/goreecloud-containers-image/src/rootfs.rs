@@ -626,6 +626,11 @@ fn write_regular_file(
             ),
         });
     }
+    output.flush().map_err(|source| RootfsError::Io {
+        operation: "flush extracted regular file",
+        path: temporary.clone(),
+        source,
+    })?;
     output.sync_all().map_err(|source| RootfsError::Io {
         operation: "synchronize extracted regular file",
         path: temporary.clone(),
