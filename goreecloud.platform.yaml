@@ -7,7 +7,7 @@ component:
   repository: GoreeCloud/goreecloud-containers
 
 lifecycle: development
-version: 0.1.0-dev.1
+version: 0.1.0-dev.2
 
 supported_platforms:
   - linux
@@ -29,27 +29,27 @@ platform_systems:
     evidence:
       - docs/PLATFORM_CONFORMANCE.md
       - docs/SECURITY.md
-    notes: Source-level bounded runtime output and privacy-sensitive data boundaries exist, but no accepted Privacy Shield runtime integration exists.
+    notes: Source-level bounded registry/runtime data handling and URL/output controls exist, but no accepted Privacy Shield runtime integration exists.
   wardveil_security:
     result: applicable-blocked
     version: null
     evidence:
       - docs/PLATFORM_CONFORMANCE.md
       - docs/SECURITY.md
-    notes: Source-level runtime/path validation and execution controls exist, but no accepted Wardveil Security runtime integration exists.
+    notes: Source-level digest, transport, extraction, runtime, and path controls exist, but no accepted Wardveil Security runtime integration exists.
   everkeep:
     result: applicable-blocked
     version: null
     evidence:
       - docs/PLATFORM_CONFORMANCE.md
       - docs/RECOVERY.md
-    notes: Conservative Development bundle writes exist, but durable engine state and accepted Everkeep backup/restore evidence do not exist.
+    notes: Verified image/rootfs artifacts are reconstructible Development state and conservative bundle writes exist, but durable authoritative engine state and accepted Everkeep backup/restore evidence do not exist.
   glaze_ui:
     result: applicable-blocked
     version: null
     evidence:
       - docs/PLATFORM_CONFORMANCE.md
-    notes: The current source is CLI/library only. Planned graphical management surfaces require future Glaze UI 1.1.0 implementation and acceptance.
+    notes: The current source is CLI/library only. Planned graphical management surfaces require the latest applicable accepted Glaze UI contract before qualification.
   mesh:
     result: applicable-blocked
     version: null
@@ -66,7 +66,7 @@ platform_systems:
     evidence:
       - docs/PLATFORM_CONFORMANCE.md
       - docs/SECURITY.md
-    notes: GoreeCloud Identity authentication and authorization are not implemented in the current local Development CLI.
+    notes: GoreeCloud Identity authentication and authorization are not implemented in the current local Development CLI or image retrieval path.
 
 health:
   health_endpoint: null
@@ -77,7 +77,7 @@ continuity:
     required: true
     requirements:
       - Protect durable engine configuration, workload definitions, metadata, and required volume relationships once durable state exists.
-      - Keep reconstructible image/cache content distinguishable from irreplaceable state.
+      - Keep reconstructible verified image/cache/rootfs content distinguishable from irreplaceable state.
   restore:
     required: true
     requirements:
@@ -94,6 +94,38 @@ continuity:
       - Preserve OCI and documented declarative workload interoperability so GoreeCloud state can migrate without an unrecoverable proprietary dependency.
 
 external_dependencies:
+  - name: sha2
+    purpose: Pinned mature SHA-256 implementation used for verified image content and layer diff IDs.
+    required: true
+    version_constraint: "=0.10.8"
+  - name: ureq
+    purpose: Pinned HTTPS/HTTP transport foundation for the Development registry client.
+    required: true
+    version_constraint: "=2.12.1"
+  - name: url
+    purpose: Pinned URL parsing/normalization foundation for registry endpoints.
+    required: true
+    version_constraint: "=2.5.0"
+  - name: idna
+    purpose: Pinned host/IDNA handling foundation used by the image networking dependency set.
+    required: true
+    version_constraint: "=0.5.0"
+  - name: serde
+    purpose: Pinned typed deserialization foundation for image/registry metadata.
+    required: true
+    version_constraint: "=1.0.217"
+  - name: serde_json
+    purpose: Pinned JSON parser for bounded registry/image metadata.
+    required: true
+    version_constraint: "=1.0.138"
+  - name: flate2
+    purpose: Pinned gzip decompression foundation for supported image layers.
+    required: true
+    version_constraint: "=1.0.35"
+  - name: tar
+    purpose: Pinned tar record parsing foundation for restricted layer extraction.
+    required: true
+    version_constraint: "=0.4.43"
   - name: crun
     purpose: Preferred mature OCI runtime target. Current Development source can explicitly probe and invoke a caller-supplied absolute executable path; real lifecycle acceptance remains pending.
     required: false
@@ -128,9 +160,9 @@ conformance:
     - docs/SECURITY.md
     - docs/RECOVERY.md
   blockers:
-    - No OCI image pull, verification, unpacking, or root filesystem construction exists.
+    - Source-level supported single-manifest image retrieval, digest verification, content-addressed storage, and restricted rootfs construction exist with deterministic fixture tests, but real external-registry interoperability/acceptance, reusable registry credential authentication, multi-platform index selection, and signature/provenance trust remain pending.
     - A controlled source-level runtime execution path exists and is covered by fake-runtime tests, but real crun/runc lifecycle acceptance and OCI conformance evidence remain pending.
-    - Durable engine metadata and recovery behavior are not implemented.
+    - Durable authoritative engine metadata and accepted recovery behavior are not implemented.
     - Rootless runtime acceptance, networking, storage, resource limits, health checks, and restart behavior are not implemented.
     - GoreeCloud Manager, Privacy Shield, Wardveil Security, Everkeep, Glaze UI, Mesh, and Identity integrations are not accepted.
     - No production deployment, migration pilot, rollback evidence, or Stable qualification exists.
