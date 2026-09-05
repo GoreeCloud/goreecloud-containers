@@ -475,8 +475,8 @@ impl RegistryClient {
             validate_network_url(&next)?;
             if current.scheme() == "https" && next.scheme() != "https" {
                 return Err(RegistryError::InsecureRedirect {
-                    from: current,
-                    to: next,
+                    from: redact_url(&current),
+                    to: redact_url(&next),
                 });
             }
             if !same_origin(&current, &next) {
@@ -551,8 +551,8 @@ pub enum RegistryError {
         maximum: usize,
     },
     InsecureRedirect {
-        from: Url,
-        to: Url,
+        from: String,
+        to: String,
     },
     UnsupportedManifestMediaType(String),
     ManifestMediaTypeMismatch {
@@ -639,9 +639,7 @@ impl fmt::Display for RegistryError {
             ),
             Self::InsecureRedirect { from, to } => write!(
                 formatter,
-                "registry redirect would downgrade HTTPS: '{}' -> '{}'",
-                redact_url(from),
-                redact_url(to)
+                "registry redirect would downgrade HTTPS: '{from}' -> '{to}'"
             ),
             Self::UnsupportedManifestMediaType(value) => {
                 write!(formatter, "unsupported image manifest media type: {value}")
@@ -1026,7 +1024,7 @@ fn read_file_bounded(
     maximum: u64,
     context: &'static str,
 ) -> Result<Vec<u8>, RegistryError> {
-    let mut file = File::open(path).map_err(|source| RegistryError::Io {
+    let file = File::open(path).map_err(|source| RegistryError::Io {
         operation: "open stored image metadata",
         path: path.to_path_buf(),
         source,
@@ -1277,7 +1275,7 @@ mod tests {
     fn tar_with_file(path: &str, body: &[u8]) -> Vec<u8> {
         let mut bytes = Vec::new();
         {
-            let mut builder = Builder::new(&mut bytes);
+            let mut builder = tar::Builder::new(&mut bytes);
             let mut header = Header::new_gnu();
             header.set_size(u64::try_from(body.len()).expect("fixture length fits in u64"));
             header.set_mode(0o755);
@@ -1432,13 +1430,10 @@ mod tests {
             .expect("fixture content store should open");
 
         assert!(matches!(
-            RegistryClient::new().pull_image(
-                &reference,
-                &store,
-                &rootfs,
-                RootfsPolicy::default()
-            ),
-            Err(RegistryError::Content(ImageContentError::DigestMismatch { .. }))
+            RegistryClient::new().pull_image(&reference, &store, &rootfs, RootfsPolicy::default()),
+            Err(RegistryError::Content(
+                ImageContentError::DigestMismatch { .. }
+            ))
         ));
         assert!(!rootfs.exists());
 
