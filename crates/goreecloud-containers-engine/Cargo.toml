@@ -10,5 +10,9 @@ repository.workspace = true
 goreecloud-containers-image = { path = "../goreecloud-containers-image" }
 goreecloud-containers-oci = { path = "../goreecloud-containers-oci" }
 
+[dev-dependencies]
+goreecloud-containers-core = { path = "../goreecloud-containers-core" }
+goreecloud-containers-runtime = { path = "../goreecloud-containers-runtime" }
+
 [lints]
 workspace = true
