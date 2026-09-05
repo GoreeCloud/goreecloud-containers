@@ -4,8 +4,7 @@ use goreecloud_containers_image::registry::{
 };
 use goreecloud_containers_image::rootfs::RootfsPolicy;
 use goreecloud_containers_oci::{
-    DEFAULT_ROOTFS_DIRECTORY, InitializedBundle, OciConfig, OciConfigError,
-    initialize_linux_bundle,
+    DEFAULT_ROOTFS_DIRECTORY, InitializedBundle, OciConfig, OciConfigError, initialize_linux_bundle,
 };
 use std::collections::HashSet;
 use std::error::Error;
@@ -195,10 +194,7 @@ pub fn oci_config_from_image_configuration(
 
     if !image.process.env.is_empty() {
         validate_image_environment(&image.process.env)?;
-        config.process = config
-            .process
-            .clone()
-            .with_env(image.process.env.clone())?;
+        config.process = config.process.clone().with_env(image.process.env.clone())?;
     }
 
     if let Some(working_dir) = image
@@ -275,11 +271,7 @@ fn finalize_pulled_image_bundle(
 
     let config = oci_config_from_image_configuration(&pulled.configuration)?;
     let initialized_stage = initialize_linux_bundle(stage, &config)?;
-    let bundle = publish_staged_bundle(
-        &initialized_stage,
-        bundle_target,
-        target_name,
-    )?;
+    let bundle = publish_staged_bundle(&initialized_stage, bundle_target, target_name)?;
     pulled.rootfs.rootfs_path = bundle.rootfs_path.clone();
 
     Ok(PulledBundle {
@@ -317,17 +309,13 @@ fn is_conservative_environment_name(name: &str) -> bool {
 
 fn validate_image_working_directory(value: &str) -> Result<(), EngineError> {
     if value.contains('\0') || !value.starts_with('/') {
-        return Err(EngineError::InvalidImageWorkingDirectory(
-            value.to_owned(),
-        ));
+        return Err(EngineError::InvalidImageWorkingDirectory(value.to_owned()));
     }
     if value
         .split('/')
         .any(|component| matches!(component, "." | ".."))
     {
-        return Err(EngineError::InvalidImageWorkingDirectory(
-            value.to_owned(),
-        ));
+        return Err(EngineError::InvalidImageWorkingDirectory(value.to_owned()));
     }
     Ok(())
 }
@@ -383,9 +371,7 @@ fn validate_new_bundle_target(bundle_target: &Path) -> Result<(PathBuf, OsString
         return Err(EngineError::BundleParentSymlink(parent.to_path_buf()));
     }
     if !parent_metadata.is_dir() {
-        return Err(EngineError::BundleParentNotDirectory(
-            parent.to_path_buf(),
-        ));
+        return Err(EngineError::BundleParentNotDirectory(parent.to_path_buf()));
     }
     let canonical_parent = fs::canonicalize(parent).map_err(|source| EngineError::Io {
         operation: "canonicalize OCI bundle target parent",
@@ -527,12 +513,10 @@ fn publish_staged_bundle(
 #[cfg(unix)]
 fn set_private_directory_permissions(path: &Path) -> Result<(), EngineError> {
     use std::os::unix::fs::PermissionsExt as _;
-    fs::set_permissions(path, fs::Permissions::from_mode(0o700)).map_err(|source| {
-        EngineError::Io {
-            operation: "set private OCI bundle directory permissions",
-            path: path.to_path_buf(),
-            source,
-        }
+    fs::set_permissions(path, fs::Permissions::from_mode(0o700)).map_err(|source| EngineError::Io {
+        operation: "set private OCI bundle directory permissions",
+        path: path.to_path_buf(),
+        source,
     })
 }
 
