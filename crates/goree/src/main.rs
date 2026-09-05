@@ -122,21 +122,13 @@ fn run_image(mut args: impl Iterator<Item = String>) -> Result<(), String> {
             );
             ensure_no_extra_args(args)?;
 
-            let reference = RegistryReference::parse(
-                &registry_base_url,
-                repository,
-                image_reference,
-            )
-            .map_err(|error| error.to_string())?;
+            let reference =
+                RegistryReference::parse(&registry_base_url, repository, image_reference)
+                    .map_err(|error| error.to_string())?;
             let store = ContentStore::open(store_root, DEFAULT_MAX_CONTENT_BYTES)
                 .map_err(|error| error.to_string())?;
             let pulled = RegistryClient::new()
-                .pull_image(
-                    &reference,
-                    &store,
-                    &rootfs_target,
-                    RootfsPolicy::default(),
-                )
+                .pull_image(&reference, &store, &rootfs_target, RootfsPolicy::default())
                 .map_err(|error| error.to_string())?;
 
             println!("manifest: {}", pulled.manifest_digest);
