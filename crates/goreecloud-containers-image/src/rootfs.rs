@@ -98,10 +98,18 @@ impl fmt::Display for RootfsError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::RootfsPathNotAbsolute(path) => {
-                write!(formatter, "rootfs target path must be absolute: {}", path.display())
+                write!(
+                    formatter,
+                    "rootfs target path must be absolute: {}",
+                    path.display()
+                )
             }
             Self::RootfsPathHasNoParent(path) => {
-                write!(formatter, "rootfs target path has no parent: {}", path.display())
+                write!(
+                    formatter,
+                    "rootfs target path has no parent: {}",
+                    path.display()
+                )
             }
             Self::RootfsPathHasInvalidName(path) => write!(
                 formatter,
@@ -124,7 +132,11 @@ impl fmt::Display for RootfsError {
                 path.display()
             ),
             Self::RootfsParentNotDirectory(path) => {
-                write!(formatter, "rootfs parent is not a directory: {}", path.display())
+                write!(
+                    formatter,
+                    "rootfs parent is not a directory: {}",
+                    path.display()
+                )
             }
             Self::RootfsParentSymlink(path) => write!(
                 formatter,
@@ -163,7 +175,11 @@ impl fmt::Display for RootfsError {
                 path.display()
             ),
             Self::UnsafeArchivePath(path) => {
-                write!(formatter, "unsafe archive path rejected: {}", path.display())
+                write!(
+                    formatter,
+                    "unsafe archive path rejected: {}",
+                    path.display()
+                )
             }
             Self::UnsupportedEntryType { path, entry_type } => write!(
                 formatter,
@@ -386,7 +402,11 @@ fn hash_reader_bounded(mut reader: impl Read, maximum: u64) -> Result<Sha256Dige
     Ok(Sha256Digest::from_bytes(hasher.finalize().into()))
 }
 
-fn apply_layer(rootfs: &Path, layer: &LayerArchive, policy: RootfsPolicy) -> Result<(), RootfsError> {
+fn apply_layer(
+    rootfs: &Path,
+    layer: &LayerArchive,
+    policy: RootfsPolicy,
+) -> Result<(), RootfsError> {
     let file = File::open(&layer.path).map_err(|source| RootfsError::Io {
         operation: "open verified layer for extraction",
         path: layer.path.clone(),
@@ -597,7 +617,9 @@ fn write_regular_file(
         Ok(metadata) if metadata.file_type().is_symlink() => {
             return Err(RootfsError::TargetPathSymlink(target));
         }
-        Ok(metadata) if metadata.is_dir() => return Err(RootfsError::TargetPathIsDirectory(target)),
+        Ok(metadata) if metadata.is_dir() => {
+            return Err(RootfsError::TargetPathIsDirectory(target));
+        }
         Ok(_) => {}
         Err(source) if source.kind() == io::ErrorKind::NotFound => {}
         Err(source) => {

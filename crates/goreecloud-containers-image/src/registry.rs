@@ -15,13 +15,11 @@ use std::time::Duration;
 use url::Url;
 
 pub const OCI_IMAGE_MANIFEST: &str = "application/vnd.oci.image.manifest.v1+json";
-pub const DOCKER_IMAGE_MANIFEST: &str =
-    "application/vnd.docker.distribution.manifest.v2+json";
+pub const DOCKER_IMAGE_MANIFEST: &str = "application/vnd.docker.distribution.manifest.v2+json";
 pub const OCI_IMAGE_CONFIG: &str = "application/vnd.oci.image.config.v1+json";
 pub const DOCKER_IMAGE_CONFIG: &str = "application/vnd.docker.container.image.v1+json";
 
-const MANIFEST_ACCEPT: &str =
-    "application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json";
+const MANIFEST_ACCEPT: &str = "application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json";
 const DEFAULT_MAX_MANIFEST_BYTES: u64 = 4 * 1024 * 1024;
 const DEFAULT_MAX_CONFIG_BYTES: u64 = 16 * 1024 * 1024;
 const DEFAULT_MAX_TOKEN_BYTES: u64 = 64 * 1024;
@@ -205,11 +203,8 @@ impl RegistryClient {
             });
         }
 
-        let config_content = self.fetch_blob(
-            reference,
-            &fetched_manifest.manifest.config,
-            content_store,
-        )?;
+        let config_content =
+            self.fetch_blob(reference, &fetched_manifest.manifest.config, content_store)?;
         let config_bytes = read_file_bounded(
             &config_content.path,
             self.max_config_bytes,
@@ -272,11 +267,8 @@ impl RegistryClient {
         content_store: &ContentStore,
     ) -> Result<FetchedManifest, RegistryError> {
         let request_url = reference.manifest_url()?;
-        let response = self.authorized_get(
-            request_url,
-            Some(MANIFEST_ACCEPT),
-            &reference.pull_scope(),
-        )?;
+        let response =
+            self.authorized_get(request_url, Some(MANIFEST_ACCEPT), &reference.pull_scope())?;
         if response.status() != 200 {
             return Err(RegistryError::UnexpectedStatus {
                 context: "manifest retrieval",
@@ -292,9 +284,7 @@ impl RegistryClient {
             return Err(RegistryError::UnsupportedManifestMediaType(content_type));
         }
 
-        let header_digest = response
-            .header("Docker-Content-Digest")
-            .map(str::to_owned);
+        let header_digest = response.header("Docker-Content-Digest").map(str::to_owned);
         let body = read_response_bounded(response, self.max_manifest_bytes, "manifest")?;
 
         let reference_digest = Sha256Digest::from_str(reference.reference()).ok();
@@ -344,12 +334,13 @@ impl RegistryClient {
             });
         }
         if let Some(content_length) = response.header("Content-Length") {
-            let content_length = content_length.parse::<u64>().map_err(|_| {
-                RegistryError::InvalidHeader {
-                    name: "Content-Length",
-                    value: content_length.to_owned(),
-                }
-            })?;
+            let content_length =
+                content_length
+                    .parse::<u64>()
+                    .map_err(|_| RegistryError::InvalidHeader {
+                        name: "Content-Length",
+                        value: content_length.to_owned(),
+                    })?;
             if content_length > content_store.max_content_bytes() {
                 return Err(RegistryError::BodyTooLarge {
                     context: "blob response",
@@ -433,7 +424,8 @@ impl RegistryClient {
                 "token response did not contain token or access_token".to_owned(),
             ),
         )?;
-        if token.is_empty() || token.len() > usize::try_from(self.max_token_bytes).unwrap_or(usize::MAX)
+        if token.is_empty()
+            || token.len() > usize::try_from(self.max_token_bytes).unwrap_or(usize::MAX)
         {
             return Err(RegistryError::InvalidAuthenticationChallenge(
                 "registry bearer token is empty or exceeds the configured bound".to_owned(),
@@ -465,10 +457,12 @@ impl RegistryClient {
             let location = response
                 .header("Location")
                 .ok_or(RegistryError::MissingHeader("Location"))?;
-            let next = current.join(location).map_err(|source| RegistryError::InvalidUrl {
-                value: location.to_owned(),
-                source,
-            })?;
+            let next = current
+                .join(location)
+                .map_err(|source| RegistryError::InvalidUrl {
+                    value: location.to_owned(),
+                    source,
+                })?;
             validate_network_url(&next)?;
             if current.scheme() == "https" && next.scheme() != "https" {
                 return Err(RegistryError::InsecureRedirect {
@@ -794,7 +788,9 @@ fn parse_manifest(body: &[u8], response_media_type: &str) -> Result<ImageManifes
         source,
     })?;
     if raw.schema_version != 2 {
-        return Err(RegistryError::InvalidManifestSchemaVersion(raw.schema_version));
+        return Err(RegistryError::InvalidManifestSchemaVersion(
+            raw.schema_version,
+        ));
     }
     if let Some(document_media_type) = raw.media_type {
         let document_media_type = normalize_media_type(&document_media_type);
@@ -939,7 +935,9 @@ fn build_registry_url(
     let mut url = base.clone();
     {
         let mut segments = url.path_segments_mut().map_err(|()| {
-            RegistryError::InvalidRegistryBase("registry base URL cannot be hierarchical".to_owned())
+            RegistryError::InvalidRegistryBase(
+                "registry base URL cannot be hierarchical".to_owned(),
+            )
         })?;
         segments.clear();
         segments.push("v2");
@@ -990,10 +988,12 @@ fn read_response_bounded(
     context: &'static str,
 ) -> Result<Vec<u8>, RegistryError> {
     if let Some(content_length) = response.header("Content-Length") {
-        let parsed = content_length.parse::<u64>().map_err(|_| RegistryError::InvalidHeader {
-            name: "Content-Length",
-            value: content_length.to_owned(),
-        })?;
+        let parsed = content_length
+            .parse::<u64>()
+            .map_err(|_| RegistryError::InvalidHeader {
+                name: "Content-Length",
+                value: content_length.to_owned(),
+            })?;
         if parsed > maximum {
             return Err(RegistryError::BodyTooLarge { context, maximum });
         }
@@ -1206,7 +1206,9 @@ mod tests {
 
         fn join(mut self) {
             if let Some(handle) = self.handle.take() {
-                handle.join().expect("fixture registry thread should finish");
+                handle
+                    .join()
+                    .expect("fixture registry thread should finish");
             }
         }
     }
@@ -1241,7 +1243,11 @@ mod tests {
             digest: None,
             body: b"not found".to_vec(),
         });
-        let reason = if response.status == 200 { "OK" } else { "Not Found" };
+        let reason = if response.status == 200 {
+            "OK"
+        } else {
+            "Not Found"
+        };
         write!(
             stream,
             "HTTP/1.1 {} {}\r\nContent-Length: {}\r\nConnection: close\r\n",
@@ -1310,7 +1316,9 @@ mod tests {
         assert!(RegistryReference::parse("https://registry.example", "team/app", "v1.2").is_ok());
         assert!(RegistryReference::parse("http://registry.example", "team/app", "v1").is_err());
         assert!(RegistryReference::parse("https://registry.example", "Team/App", "v1").is_err());
-        assert!(RegistryReference::parse("https://registry.example", "team/app", "bad tag").is_err());
+        assert!(
+            RegistryReference::parse("https://registry.example", "team/app", "bad tag").is_err()
+        );
     }
 
     #[test]
