@@ -85,13 +85,9 @@ fn run_bundle(mut args: impl Iterator<Item = String>) -> Result<(), String> {
                     .map_err(|error| error.to_string())?;
             let store = ContentStore::open(store_root, DEFAULT_MAX_CONTENT_BYTES)
                 .map_err(|error| error.to_string())?;
-            let pulled = pull_image_to_bundle(
-                &reference,
-                &store,
-                &bundle_target,
-                RootfsPolicy::default(),
-            )
-            .map_err(|error| error.to_string())?;
+            let pulled =
+                pull_image_to_bundle(&reference, &store, &bundle_target, RootfsPolicy::default())
+                    .map_err(|error| error.to_string())?;
 
             println!("manifest: {}", pulled.image.manifest_digest);
             println!("image-config: {}", pulled.image.config_digest);
