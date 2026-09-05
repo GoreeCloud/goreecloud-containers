@@ -4,9 +4,7 @@ use goreecloud_containers_core::ContainerId;
 use goreecloud_containers_engine::oci_config_from_image_configuration;
 use goreecloud_containers_image::registry::{ImageConfiguration, ImageProcessConfig};
 use goreecloud_containers_oci::{DEFAULT_ROOTFS_DIRECTORY, initialize_linux_bundle};
-use goreecloud_containers_runtime::{
-    OciRuntimeKind, ProcessOciRuntime, RuntimeExecutor,
-};
+use goreecloud_containers_runtime::{OciRuntimeKind, ProcessOciRuntime, RuntimeExecutor};
 use std::fs;
 use std::os::unix::fs::PermissionsExt as _;
 use std::path::PathBuf;
@@ -47,11 +45,8 @@ fn mapped_image_bundle_is_accepted_by_runtime_create_boundary() {
         .expect("mapped OCI configuration should initialize the controlled bundle");
 
     let runtime_script = directory.join("fake-runtime");
-    fs::write(
-        &runtime_script,
-        "#!/bin/sh\nprintf '%s\\n' \"$@\"\n",
-    )
-    .expect("fake runtime should be written");
+    fs::write(&runtime_script, "#!/bin/sh\nprintf '%s\\n' \"$@\"\n")
+        .expect("fake runtime should be written");
     fs::set_permissions(&runtime_script, fs::Permissions::from_mode(0o755))
         .expect("fake runtime should be executable");
 
