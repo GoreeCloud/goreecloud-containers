@@ -11,12 +11,13 @@ path = "src/crate_root.rs"
 
 [dependencies]
 flate2 = { version = "=1.0.35", default-features = false, features = ["rust_backend"] }
+idna = "=0.5.0"
 serde = { version = "=1.0.217", features = ["derive"] }
 serde_json = "=1.0.138"
 sha2 = "=0.10.8"
 tar = { version = "=0.4.43", default-features = false }
 ureq = { version = "=2.12.1", default-features = false, features = ["tls"] }
-url = "=2.4.1"
+url = "=2.5.0"
 
 [lints]
 workspace = true
