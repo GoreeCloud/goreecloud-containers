@@ -314,11 +314,10 @@ impl RegistryClient {
             (None, None) => return Err(RegistryError::MissingHeader("Docker-Content-Digest")),
         };
 
-        let stored = content_store.ingest_reader(expected, body.as_slice())?;
+        content_store.ingest_reader(expected, body.as_slice())?;
         let manifest = parse_manifest(&body, &content_type)?;
         Ok(FetchedManifest {
             digest: expected,
-            stored,
             manifest,
         })
     }
@@ -407,15 +406,13 @@ impl RegistryClient {
         if !url.username().is_empty() || url.password().is_some() {
             return Err(RegistryError::CredentialsInUrl);
         }
+        let scope = validated_bearer_scope(challenge, requested_scope)?;
         {
             let mut query = url.query_pairs_mut();
             if let Some(service) = &challenge.service {
                 query.append_pair("service", service);
             }
-            query.append_pair(
-                "scope",
-                challenge.scope.as_deref().unwrap_or(requested_scope),
-            );
+            query.append_pair("scope", scope);
         }
 
         let (_, response) = self.get_following_redirects(url, Some("application/json"), None)?;
@@ -781,8 +778,6 @@ struct RawTokenResponse {
 
 struct FetchedManifest {
     digest: Sha256Digest,
-    #[allow(dead_code)]
-    stored: StoredContent,
     manifest: ImageManifest,
 }
 
@@ -1084,6 +1079,20 @@ fn parse_bearer_challenge(value: &str) -> Result<BearerChallenge, RegistryError>
     })
 }
 
+fn validated_bearer_scope<'a>(
+    challenge: &BearerChallenge,
+    requested_scope: &'a str,
+) -> Result<&'a str, RegistryError> {
+    if let Some(advertised_scope) = challenge.scope.as_deref() {
+        if advertised_scope != requested_scope {
+            return Err(RegistryError::InvalidAuthenticationChallenge(format!(
+                "registry requested bearer scope '{advertised_scope}', but GoreeCloud requested only '{requested_scope}'"
+            )));
+        }
+    }
+    Ok(requested_scope)
+}
+
 fn split_auth_parameters(value: &str) -> Result<Vec<&str>, RegistryError> {
     let bytes = value.as_bytes();
     let mut parts = Vec::new();
@@ -1162,7 +1171,7 @@ mod tests {
     use std::thread;
     use std::thread::JoinHandle;
     use std::time::{SystemTime, UNIX_EPOCH};
-    use tar::{Builder, Header};
+    use tar::Header;
 
     #[derive(Clone)]
     struct FixtureResponse {
@@ -1313,6 +1322,24 @@ mod tests {
         assert_eq!(challenge.realm, "https://auth.example/token");
         assert_eq!(challenge.service.as_deref(), Some("registry.example"));
         assert_eq!(challenge.scope.as_deref(), Some("repository:team/app:pull"));
+        assert_eq!(
+            validated_bearer_scope(&challenge, "repository:team/app:pull")
+                .expect("matching scope should be accepted"),
+            "repository:team/app:pull"
+        );
+    }
+
+    #[test]
+    fn rejects_bearer_scope_escalation() {
+        let challenge = BearerChallenge {
+            realm: "https://auth.example/token".to_owned(),
+            service: Some("registry.example".to_owned()),
+            scope: Some("repository:team/admin:push,pull".to_owned()),
+        };
+        assert!(matches!(
+            validated_bearer_scope(&challenge, "repository:team/app:pull"),
+            Err(RegistryError::InvalidAuthenticationChallenge(_))
+        ));
     }
 
     #[test]
