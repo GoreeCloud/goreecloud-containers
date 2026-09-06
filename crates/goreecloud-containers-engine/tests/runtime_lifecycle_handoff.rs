@@ -45,11 +45,8 @@ fn mapped_image_bundle_crosses_bounded_runtime_lifecycle_boundaries() {
         .expect("mapped OCI configuration should initialize the controlled bundle");
 
     let runtime_script = directory.join("fake-runtime");
-    fs::write(
-        &runtime_script,
-        "#!/bin/sh\nprintf '%s\\n' \"$@\"\n",
-    )
-    .expect("fake runtime should be written");
+    fs::write(&runtime_script, "#!/bin/sh\nprintf '%s\\n' \"$@\"\n")
+        .expect("fake runtime should be written");
     fs::set_permissions(&runtime_script, fs::Permissions::from_mode(0o755))
         .expect("fake runtime should be executable");
 
@@ -84,7 +81,10 @@ fn mapped_image_bundle_crosses_bounded_runtime_lifecycle_boundaries() {
     let delete = runtime
         .delete(&executor, &id)
         .expect("container identifier should pass the runtime delete boundary");
-    assert_eq!(delete.stdout.text_lossy(), "delete\nlifecycle-handoff-test\n");
+    assert_eq!(
+        delete.stdout.text_lossy(),
+        "delete\nlifecycle-handoff-test\n"
+    );
 
     assert!(initialized.rootfs_path.is_dir());
     assert!(initialized.config_path.is_file());
