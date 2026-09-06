@@ -12,7 +12,7 @@ fn opt_in_real_runtime_probe_requires_complete_configuration() {
     let path = env::var_os(PATH_ENV);
 
     match (kind, path) {
-        (None, None) => return,
+        (None, None) => (),
         (Some(_), None) => panic!("{PATH_ENV} is required when {KIND_ENV} is set"),
         (None, Some(_)) => panic!("{KIND_ENV} is required when {PATH_ENV} is set"),
         (Some(kind), Some(path)) => {
