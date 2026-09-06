@@ -20,10 +20,7 @@ fn unique_temp_dir() -> PathBuf {
 fn execution_runtime_rejects_relative_path_before_lookup() {
     let error = ProcessOciRuntime::new_for_execution(OciRuntimeKind::Crun, "crun")
         .expect_err("relative executable path must fail closed");
-    assert!(matches!(
-        error,
-        RuntimeError::ExecutablePathNotAbsolute(_)
-    ));
+    assert!(matches!(error, RuntimeError::ExecutablePathNotAbsolute(_)));
 }
 
 #[test]
@@ -31,10 +28,7 @@ fn execution_runtime_rejects_directory_path() {
     let directory = unique_temp_dir();
     let error = ProcessOciRuntime::new_for_execution(OciRuntimeKind::Runc, &directory)
         .expect_err("directory cannot be accepted as runtime executable");
-    assert!(matches!(
-        error,
-        RuntimeError::ExecutableNotRegularFile(_)
-    ));
+    assert!(matches!(error, RuntimeError::ExecutableNotRegularFile(_)));
     fs::remove_dir_all(directory).expect("remove temporary test directory");
 }
 
@@ -51,10 +45,7 @@ fn execution_runtime_rejects_non_executable_regular_file() {
 
     let error = ProcessOciRuntime::new_for_execution(OciRuntimeKind::Crun, &executable)
         .expect_err("non-executable runtime file must fail closed");
-    assert!(matches!(
-        error,
-        RuntimeError::ExecutableNotExecutable(_)
-    ));
+    assert!(matches!(error, RuntimeError::ExecutableNotExecutable(_)));
     fs::remove_dir_all(directory).expect("remove temporary test directory");
 }
 
