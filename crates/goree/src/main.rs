@@ -1,4 +1,5 @@
 use goreecloud_containers_core::ContainerId;
+use goreecloud_containers_engine::pull_image_to_bundle;
 use goreecloud_containers_image::registry::{RegistryClient, RegistryReference};
 use goreecloud_containers_image::rootfs::RootfsPolicy;
 use goreecloud_containers_image::{ContentStore, DEFAULT_MAX_CONTENT_BYTES, Sha256Digest};
@@ -57,6 +58,45 @@ fn run_bundle(mut args: impl Iterator<Item = String>) -> Result<(), String> {
             println!("bundle: {}", initialized.bundle_path.display());
             println!("rootfs: {}", initialized.rootfs_path.display());
             println!("config: {}", initialized.config_path.display());
+            Ok(())
+        }
+        Some("from-image") => {
+            let registry_base_url = args
+                .next()
+                .ok_or_else(|| "missing registry base URL".to_owned())?;
+            let repository = args
+                .next()
+                .ok_or_else(|| "missing registry repository".to_owned())?;
+            let image_reference = args
+                .next()
+                .ok_or_else(|| "missing image tag or digest reference".to_owned())?;
+            let store_root = PathBuf::from(
+                args.next()
+                    .ok_or_else(|| "missing absolute content-store root".to_owned())?,
+            );
+            let bundle_target = PathBuf::from(
+                args.next()
+                    .ok_or_else(|| "missing absolute new bundle target".to_owned())?,
+            );
+            ensure_no_extra_args(args)?;
+
+            let reference =
+                RegistryReference::parse(&registry_base_url, repository, image_reference)
+                    .map_err(|error| error.to_string())?;
+            let store = ContentStore::open(store_root, DEFAULT_MAX_CONTENT_BYTES)
+                .map_err(|error| error.to_string())?;
+            let pulled =
+                pull_image_to_bundle(&reference, &store, &bundle_target, RootfsPolicy::default())
+                    .map_err(|error| error.to_string())?;
+
+            println!("manifest: {}", pulled.image.manifest_digest);
+            println!("image-config: {}", pulled.image.config_digest);
+            println!("layers: {}", pulled.image.layers.len());
+            println!("os: {}", pulled.image.configuration.os);
+            println!("architecture: {}", pulled.image.configuration.architecture);
+            println!("bundle: {}", pulled.bundle.bundle_path.display());
+            println!("rootfs: {}", pulled.bundle.rootfs_path.display());
+            println!("config: {}", pulled.bundle.config_path.display());
             Ok(())
         }
         Some(command) => Err(format!(
@@ -295,5 +335,5 @@ fn print_help() {
 }
 
 fn help_text() -> &'static str {
-    "GoreeCloud Containers Development CLI\n\nUsage:\n  goree version\n  goree bundle init <absolute-bundle> <command> [args...]\n  goree image ingest <sha256:digest> <absolute-source-file> <absolute-store-root> [max-content-bytes]\n  goree image pull <registry-base-url> <repository> <tag-or-sha256-digest> <absolute-store-root> <absolute-new-rootfs>\n  goree runtime probe [crun|runc] [executable]\n  goree runtime create <crun|runc> <absolute-executable> <container-id> <absolute-bundle>\n  goree runtime start <crun|runc> <absolute-executable> <container-id>\n  goree runtime state <crun|runc> <absolute-executable> <container-id>\n  goree runtime delete <crun|runc> <absolute-executable> <container-id>\n  goree container validate-id <container-id>\n\nImage retrieval, rootfs construction, and lifecycle execution are Development-only. Registry credential authentication, image-index selection, symbolic-link/hard-link layer entries, real registry/runtime acceptance, rootless, and production acceptance remain pending."
+    "GoreeCloud Containers Development CLI\n\nUsage:\n  goree version\n  goree bundle init <absolute-bundle> <command> [args...]\n  goree bundle from-image <registry-base-url> <repository> <tag-or-sha256-digest> <absolute-store-root> <absolute-new-bundle>\n  goree image ingest <sha256:digest> <absolute-source-file> <absolute-store-root> [max-content-bytes]\n  goree image pull <registry-base-url> <repository> <tag-or-sha256-digest> <absolute-store-root> <absolute-new-rootfs>\n  goree runtime probe [crun|runc] [executable]\n  goree runtime create <crun|runc> <absolute-executable> <container-id> <absolute-bundle>\n  goree runtime start <crun|runc> <absolute-executable> <container-id>\n  goree runtime state <crun|runc> <absolute-executable> <container-id>\n  goree runtime delete <crun|runc> <absolute-executable> <container-id>\n  goree container validate-id <container-id>\n\nImage retrieval, rootfs/bundle construction, and lifecycle execution are Development-only. Registry credential authentication, image-index selection, symbolic-link/hard-link layer entries, privileged/named image-user mapping, real registry/runtime acceptance, rootless, and production acceptance remain pending."
 }
