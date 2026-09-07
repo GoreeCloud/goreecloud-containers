@@ -33,6 +33,14 @@ fn opt_in_real_runtime_probe_requires_complete_configuration() {
             assert_eq!(probe.kind, kind);
             assert!(probe.executable.is_absolute());
             assert!(!probe.version_output.trim().is_empty());
+
+            let expected_identity = kind.to_string();
+            let normalized_version = probe.version_output.to_ascii_lowercase();
+            assert!(
+                normalized_version.contains(&expected_identity),
+                "configured runtime --version output must identify itself as {expected_identity}; got {:?}",
+                probe.version_output
+            );
         }
     }
 }
